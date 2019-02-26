@@ -1,0 +1,2 @@
+Trying to reproduce figure 3.5 from the PhD-thesis. I have some problems with the errors on the numerical solution but I will
+try to see if these can be decreased using FFTW. 
