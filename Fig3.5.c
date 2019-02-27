@@ -25,7 +25,7 @@ double Gauss(double x, double shift, int n){
 }
 
 // Define analytical potential
-double V_A(double x, double shift, double esp){
+double V_A_func(double x, double shift, double esp){
   return -G/sqrt(pow(x-shift,2)+pow(esp,2));   
 }
 
@@ -41,12 +41,17 @@ int main(void){
   fftw_plan plan; // Declaring a plan of variable type "fftw_plan"
 
   double x[NPOINTS]; // Declare and initialize a static array for x (the sample points) 
-  for(int i = 0; i < NPOINTS; i++){
+  for (int i = 0; i < NPOINTS; i++){
     x[i] = i*(X_MAX-X_MIN)/(NPOINTS-1); // uniform spacing between each x (includes each endpoint)
   }
 
+  double V_A[NPOINTS]; // Calculate the analytical potential for each x-value
+  for (int i = 0; i < NPOINTS; i++){
+    V_A[i] = V_A_func(x[i], SHIFT, ESP);
+  }
+
 #ifdef PRINT // Print x-array if condition is specified when compiling
-  for(int i = 0; i < NPOINTS; i++){
+  for (int i = 0; i < NPOINTS; i++){
     printf("x-array: %d %f \n", i, x[i]);
   }
 #endif
@@ -125,7 +130,6 @@ int main(void){
   inv_plan = fftw_plan_dft_c2r_1d(NPOINTS, inv_in, inv_out, FFTW_ESTIMATE); // Inverse transform
   
   fftw_execute(inv_plan);
-
   
 
   FILE *of; // Declaring a file for saving the output/result
@@ -134,11 +138,14 @@ int main(void){
   // Print the coefficients of the inverse DFT function (the output)
   printf("Inverse Output:\n\n"); 
   for(i = 0; i < NPOINTS; i++) {
-    inv_out[i] = fabs(-G * STEP * 1/((double) NPOINTS) * inv_out[i]);  // Normalizing the output
+    inv_out[i] = -G * STEP * 1/((double) NPOINTS) * inv_out[i];  // Normalizing the output
 #ifdef PRINT
     printf("%d %11.7f \n", i, inv_out[i]); // Print coefficients in two seperate columns
 #endif
-    fprintf(of,"%f %f \n", x[i], inv_out[i]); // Write to the specified file in two columns 
+    // Write the numerical potential, analytical potential, a counter, and the relative difference
+    // between the two potentials, to a file (a column for each):
+    fprintf(of,"%f %f %f %f \n", x[i], fabs(inv_out[i]), fabs(V_A[i]),
+	    fabs((inv_out[i]-V_A[i])/V_A[i])); 
   }
   fclose(of); // Closing the file
 
